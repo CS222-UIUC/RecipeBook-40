@@ -1,14 +1,27 @@
 version: '3'
 services:
   web:
-    image: nginx
-    ports:  
-      - "3000:80"
+    build:
+      context: ./Front-End/login-signup
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    environment: # For hot reload
+      - WDS_SOCKET_HOST=127.0.0.1 
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true 
+    volumes: # Proper mounting
+      - ./Front-End/login-signup/src:/src/webapp/src
+      - /Front-End/login-signup/node_modules/
 
   api:
-    image: nginx
-    ports:  
-      - "443:80"
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    ports:
+      - "443:443"
+    volumes:
+      - ./backend:/src/backend
 
   proxy:
     build:
