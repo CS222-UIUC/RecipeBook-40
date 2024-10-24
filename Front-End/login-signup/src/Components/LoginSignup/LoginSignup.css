@@ -94,10 +94,11 @@
 }
 
 .submit-container-2 {
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
     display: flex;
-    margin: 0px auto;
+    margin-right: 100px;
+
 }
 
 .submit-2 {
