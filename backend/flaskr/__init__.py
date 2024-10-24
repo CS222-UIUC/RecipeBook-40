@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask
-
+import json
 
 def create_app(test_config=None):
     # create and configure the app
@@ -29,4 +29,20 @@ def create_app(test_config=None):
     def root():
         return 'Recipe app'
 
+    @app.route('/recipe', methods=["GET"])
+    def get_recipe():
+        string = json.dumps({
+            "name": "Eggs",
+            "description": "Eggs are good",
+            "items": {
+                "eggs": 2
+            }
+        })
+        return app.response_class(response=string, mimetype="application/json")
+
+    @app.route('/recipe', methods=["POST"])
+    def set_recipe():
+        # Read from database
+        return "Recipe"
+    
     return app
