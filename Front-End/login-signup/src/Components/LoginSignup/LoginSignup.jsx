@@ -62,7 +62,7 @@ const LoginSignup = () => {
                 </div>
             </div>
             <div className="submit-container-2">
-                {action=== "Sign Up"? <div></div> :<div className="forgot-password">Lost Password? <span>Click Here!</span></div>}
+                {action=== "Sign Up"? <div ></div> :<div className="forgot-password">Lost Password? <span>Click Here!</span></div>}
                 <div className={"submit-2"} onClick={handleSubmit}>Submit</div>
             </div>
             <div className="submit-container">
