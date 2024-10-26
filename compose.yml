@@ -1,5 +1,6 @@
 version: '3'
 services:
+<<<<<<< HEAD
 
   web: # This will be eventually replaced with "web" below, this is just for testing purposes.
     image: nginx:1-alpine
@@ -24,10 +25,25 @@ services:
   #     dockerfile: ./Dockerfile
   #   ports:
   #     - "443:443"
+=======
+  web:
+    image: nginx
+    ports:  
+      - "3000:80"
+
+  api:
+    image: nginx
+    ports:  
+      - "443:80"
+>>>>>>> e64ba1e9395b774287048a2029000c6e8fd74048
 
   proxy:
     build:
       context: ./nginx
       dockerfile: ./Dockerfile
     ports:
+<<<<<<< HEAD
       - "80:80"
+=======
+      - "80:80"
+>>>>>>> e64ba1e9395b774287048a2029000c6e8fd74048
