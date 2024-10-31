@@ -122,3 +122,23 @@
     background: #eaeaea;
     color: #676767;
 }
+
+.placeholder {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+}
+
+.message {
+    color: #d51b37;
+    font-size: 20px;
+    font-style: italic;
+}
+
+.full {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+}
