@@ -48,8 +48,10 @@ const LoginSignup = () => {
                 }
             }
         } catch (error) {
+            // Log the error for debugging
             console.error("Error:", error.response?.data || error.message);
-            setMessage(error.response?.data.error || "An error occurred");
+            // Check for specific error messages returned from the server
+            setMessage(error.response?.data.message || "An error occurred");
         }
     };
 
@@ -70,13 +72,12 @@ const LoginSignup = () => {
     return (
         <div className='container'>
             {isAuthenticated ? (
-                <div>
+                <div className ='placeholder'>
                     <h2>Welcome back!</h2>
                     <button onClick={handleLogout}>Logout</button>
-                    {message && <div className="message">{message}</div>}
                 </div>
             ) : (
-                <div>
+                <div className='full'>
                     <div className="header">
                         <div className="text">{action}</div>
                         <div className="underline"></div>
@@ -134,7 +135,7 @@ const LoginSignup = () => {
                             Log In
                         </div>
                     </div>
-                    {message && <div className="message">{message}</div>}
+                    {message !== "Logged out successfully" && <div className="message">{message}</div>}
                 </div>
             )}
         </div>
