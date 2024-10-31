@@ -40,6 +40,10 @@ def home():
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
+    # Check if the username or email already exists
+    if User.query.filter_by(email=data['email']).first() or User.query.filter_by(username=data['username']).first():
+        return jsonify(message="Email or username already exists."), 400  # Return an error message
+
     # Hash the password using bcrypt
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
     new_user = User(
@@ -69,6 +73,12 @@ def logout():
 @app.route('/auth-status', methods=['GET'])
 def auth_status():
     return jsonify(isAuthenticated='user_id' in session)
+
+@app.route('/reset-db', methods=['POST'])
+def reset_db():
+    db.drop_all()  # This drops all tables
+    db.create_all()  # This recreates all tables
+    return jsonify(message="Database has been reset.")
 
 if __name__ == '__main__':
     app.run(debug=True)
