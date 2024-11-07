@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Great+Vibes&family=Lavishly+Yours&family=Poiret+One&family=Rock+Salt&display=swap');
+
+/* RecipeBoard.css */
+
+html, body {
+    height: 100%; /* Ensures the body takes the full height of the viewport */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    font-family: "Architects Daughter", cursive; /* Set default font */
+}
+
+body {
+    display: flex; /* Use flex to control layout */
+    flex-direction: column; /* Stack elements vertically */
+}
+
+/* Reset styles for the entire page */
+* {
+    box-sizing: border-box;
+}
+
+/* NavBar styling */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #870000; /* or #000000 */
+    color: #ffffff; /* White text for contrast */
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 60px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.recipe-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between form sections */
+    max-width: 800px; /* Set a max width for the form */
+    margin: 0 auto; /* Center the form horizontally */
+}
+
+.container {
+    background-color: white;
+}
+
+.form-layout {
+    display: flex;
+    justify-content: space-between; /* Distribute space between ingredients and steps */
+}
+
+.ingredients-section, .steps-section {
+    flex: 1; /* Allow both sections to grow equally */
+    margin: 0 10px; /* Margin between sections */
+}
+
+.ingredients-section {
+    /* Additional styles if needed */
+}
+
+.steps-section {
+    /* Additional styles if needed */
+}
+
+.ingredient-input-container,
+.step-input-container {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    margin-bottom: 10px; /* Space between each ingredient or step input */
+}
+
+.remove-button:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+.add-ingredient-button, .add-step-button {
+    padding: 5px 10px;
+    background-color: #870000; /* Background for add button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-ingredient-button:hover, .add-step-button:hover {
+    background-color: #6b0000; /* Darker on hover */
+}
+
+
+.navbar-title {
+    font-size: 30px;
+    color: #ffffff;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 15px;
+}
+
+.navbar-links a,
+.logout-button {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 5px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: "Architects Daughter", cursive;
+}
+
+.logout-button:hover,
+.navbar-links a:hover {
+    color: #d51b37;
+}
+
+.logout-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Content area styling */
+.recipe-board {
+    margin-top: 60px; /* To avoid overlap with the fixed navbar */
+    padding: 20px;
+    flex: 1; /* Allow the main content to grow and fill the available space */
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    /* background-color: white; */
+    margin: 100px 100px;
+}
+
+.add-recipe-button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #870000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.recipe-form label {
+    display: block; /* Makes each label take its own line */
+    margin-bottom: 10px; /* Adds space below the label */
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.recipe-form input,
+.recipe-form textarea {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.recipe-form button {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #870000;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.recipe-form button:hover {
+    background-color: #d32f2f;
+}
+
+.form-input {
+    margin-top: 5px; /* Space between the label and input */
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%; /* Makes the input take the full width of its container */
+}
+
+.step-input-container,
+.ingredient-input-container {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    margin-bottom: 10px; /* Space between each ingredient or step input */
+}
+
+.remove-button {
+    margin-left: 10px; /* Space between the input and the remove button */
+    padding: 5px 10px;
+    background-color: #f44336; /* Red background for remove button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-step-button,
+.add-ingredient-button {
+    padding: 5px 10px;
+    background-color: #870000; /* Background for add button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
