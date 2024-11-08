@@ -22,6 +22,7 @@ const LoginSignup = () => {
             if (localStorage.getItem("isAuthenticated") === "true") {
                 setIsAuthenticated(true);
                 localStorage.setItem("isAuthenticated", "true");
+                localStorage.setItem("username", username);
                 navigate("/recipes");  // Automatically navigate if already authenticated
                 return;
             }
@@ -32,6 +33,7 @@ const LoginSignup = () => {
                 setIsAuthenticated(res.data.isAuthenticated);
                 if (res.data.isAuthenticated) {
                     localStorage.setItem("isAuthenticated", "true");
+                    localStorage.setItem("username", username);
                     navigate("/recipes");
                 }
             } catch (error) {
@@ -60,6 +62,7 @@ const LoginSignup = () => {
                 if (res.data.message === "Login successful") {
                     setIsAuthenticated(true);
                     localStorage.setItem("isAuthenticated", "true");
+                    localStorage.setItem("username", username);
                     navigate("/recipes");
                 }
             }
