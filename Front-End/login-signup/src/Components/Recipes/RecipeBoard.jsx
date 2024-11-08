@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import './RecipeBoard.css';
@@ -37,7 +37,123 @@ const RecipeBoard = () => {
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    // Check authentication status only if not cached
+    // Refs for dynamically resizing inputs
+    const nameRef = useRef(null);
+    const descriptionRef = useRef(null);
+    const ingredientsRefs = useRef([]);
+    const stepsRefs = useRef([]);
+    const sharedRefs = useRef([]);
+    const username = localStorage.getItem("username");
+
+    // Initial state for form reset
+    const initialRecipeState = {
+        name: "",
+        description: "",
+        steps: [""],
+        ingredients: [""],
+        isPersonal: true,
+        users: ""
+    };
+
+    const adjustHeight = (ref) => {
+        if (ref) {
+            ref.style.height = "auto";
+            ref.style.height = `${ref.scrollHeight}px`;
+        }
+    };
+
+    const handleInputChange = (e, ref) => {
+        const { name, value } = e.target;
+        setNewRecipe((prev) => ({ ...prev, [name]: value }));
+        adjustHeight(ref.current);
+    };
+
+    const handleDynamicChange = (index, value, type) => {
+        const updateFn = type === "ingredient" ? "ingredients" : "steps";
+        const refList = type === "ingredient" ? ingredientsRefs : stepsRefs;
+        const updatedValues = [...newRecipe[updateFn]];
+        updatedValues[index] = value;
+        setNewRecipe({ ...newRecipe, [updateFn]: updatedValues });
+        adjustHeight(refList.current[index]);
+    };
+
+    useEffect(() => {
+        ingredientsRefs.current.forEach((ref) => adjustHeight(ref));
+        stepsRefs.current.forEach((ref) => adjustHeight(ref));
+    }, [newRecipe.ingredients, newRecipe.steps]);
+
+    const addIngredient = () => {
+        setNewRecipe((prevRecipe) => ({
+            ...prevRecipe,
+            ingredients: [...prevRecipe.ingredients, ""]
+        }));
+    };
+
+    const removeIngredient = (index) => {
+        if (newRecipe.ingredients.length > 1) {
+            setNewRecipe((prevRecipe) => ({
+                ...prevRecipe,
+                ingredients: prevRecipe.ingredients.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
+    const addStep = () => {
+        setNewRecipe((prevRecipe) => ({
+            ...prevRecipe,
+            steps: [...prevRecipe.steps, ""]
+        }));
+    };
+
+    const removeStep = (index) => {
+        if (newRecipe.steps.length > 1) {
+            setNewRecipe((prevRecipe) => ({
+                ...prevRecipe,
+                steps: prevRecipe.steps.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            const response = await axios.post("http://127.0.0.1:5000/logout", {}, { withCredentials: true });
+            if (response.status === 200) {
+                localStorage.removeItem("isAuthenticated");
+                setIsAuthenticated(false);
+                navigate("/login");
+            } else {
+                console.error("Unexpected response during logout:", response);
+            }
+        } catch (error) {
+            console.error("Failed to log out:", error);
+        } finally {
+            setIsLoggingOut(false);
+        }
+    };
+
+    const toggleForm = () => {
+        if (showForm) {
+            // Reset the form when closing
+            setNewRecipe(initialRecipeState);
+        }
+        setShowForm(!showForm);
+    };
+
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://127.0.0.1:5000/add-recipe", newRecipe, { withCredentials: true });
+            if (response.status === 200) {
+                setRecipes([...recipes, newRecipe]);
+                setNewRecipe(initialRecipeState);
+                setShowForm(false);
+            }
+        } catch (error) {
+            console.error("Error adding recipe:", error);
+        }
+    };
+
     useEffect(() => {
         if (!isAuthenticated) {
             const checkAuthStatus = async () => {
@@ -62,87 +178,6 @@ const RecipeBoard = () => {
         }
     }, [isAuthenticated, navigate]);
 
-    // Handle logout
-    const handleLogout = async () => {
-        setIsLoggingOut(true);
-        try {
-            const response = await axios.post("http://127.0.0.1:5000/logout", {}, { withCredentials: true });
-            if (response.status === 200) {
-                localStorage.removeItem("isAuthenticated");
-                setIsAuthenticated(false);
-                navigate("/login");
-            } else {
-                console.error("Unexpected response during logout:", response);
-            }
-        } catch (error) {
-            console.error("Failed to log out:", error);
-        } finally {
-            setIsLoggingOut(false);
-        }
-    };
-
-    // Toggle form visibility
-    const toggleForm = () => {
-        setShowForm(!showForm);
-    };
-
-    // Handle form input changes
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewRecipe({ ...newRecipe, [name]: value });
-    };
-
-    // Handle steps change
-    const handleStepChange = (index, value) => {
-        const updatedSteps = [...newRecipe.steps];
-        updatedSteps[index] = value;
-        setNewRecipe({ ...newRecipe, steps: updatedSteps });
-    };
-
-    // Handle ingredients change
-    const handleIngredientChange = (index, value) => {
-        const updatedIngredients = [...newRecipe.ingredients];
-        updatedIngredients[index] = value;
-        setNewRecipe({ ...newRecipe, ingredients: updatedIngredients });
-    };
-
-    // Add a new empty step
-    const addStep = () => {
-        setNewRecipe({ ...newRecipe, steps: [...newRecipe.steps, ""] });
-    };
-
-    // Add a new empty ingredient
-    const addIngredient = () => {
-        setNewRecipe({ ...newRecipe, ingredients: [...newRecipe.ingredients, ""] });
-    };
-
-    // Remove a step by index
-    const removeStep = (index) => {
-        const updatedSteps = newRecipe.steps.filter((_, i) => i !== index);
-        setNewRecipe({ ...newRecipe, steps: updatedSteps });
-    };
-
-    // Remove an ingredient by index
-    const removeIngredient = (index) => {
-        const updatedIngredients = newRecipe.ingredients.filter((_, i) => i !== index);
-        setNewRecipe({ ...newRecipe, ingredients: updatedIngredients });
-    };
-
-    // Handle form submission
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await axios.post("http://127.0.0.1:5000/add-recipe", newRecipe, { withCredentials: true });
-            if (response.status === 200) {
-                setRecipes([...recipes, newRecipe]);
-                setNewRecipe({ name: "", description: "", steps: [""], ingredients: [""], isPersonal: true, users: "" });
-                setShowForm(false);
-            }
-        } catch (error) {
-            console.error("Error adding recipe:", error);
-        }
-    };
-
     if (isLoading) {
         return <p>Loading...</p>;
     }
@@ -151,107 +186,116 @@ const RecipeBoard = () => {
         <div className="recipe-board">
             <NavBar handleLogout={handleLogout} isLoggingOut={isLoggingOut} />
             <div className="content">
-                <h2>Welcome to your Recipe Board!</h2>
+                <h2>Welcome to your Recipe Board, {username}!</h2>
                 <button onClick={toggleForm} className="add-recipe-button">
                     {showForm ? "Close Form" : "Click here to add Recipes!"}
                 </button>
 
                 {showForm && (
-    <form onSubmit={handleFormSubmit} className="recipe-form">
-        <div className="form-header">
-            <label>
-                Recipe Name:
-                <input
-                    type="text"
-                    name="name"
-                    value={newRecipe.name}
-                    onChange={handleInputChange}
-                    required
-                    className="form-input"
-                />
-            </label>
-            <label>
-                Description:
-                <textarea
-                    name="description"
-                    value={newRecipe.description}
-                    onChange={handleInputChange}
-                    required
-                    className="form-input"
-                />
-            </label>
-        </div>
+                    <form onSubmit={handleFormSubmit} className="recipe-form">
+                        <div className="form-header">
+                            <label>
+                            <h3>Recipe Name:</h3>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={newRecipe.name}
+                                    onChange={(e) => handleInputChange(e, nameRef)}
+                                    ref={nameRef}
+                                    required
+                                    className="form-input"
+                                />
+                            </label>
+                            <label>
+                            <h3>Description:</h3>
+                                <textarea
+                                    name="description"
+                                    value={newRecipe.description}
+                                    onChange={(e) => handleInputChange(e, descriptionRef)}
+                                    ref={descriptionRef}
+                                    required
+                                    className="form-input"
+                                />
+                            </label>
+                        </div>
+                        <div className="form-layout">
+                            <div className="ingredients-section">
+                                <h3>Ingredients</h3>
+                                {newRecipe.ingredients.map((ingredient, index) => (
+                                    <div key={index} className="ingredient-input-container">
+                                        <textarea
+                                            placeholder={`Ingredient ${index + 1}`}
+                                            value={ingredient}
+                                            onChange={(e) => handleDynamicChange(index, e.target.value, "ingredient")}
+                                            ref={(el) => ingredientsRefs.current[index] = el}
+                                            required
+                                            className="form-input"
+                                        />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeIngredient(index)}
+                                                className="remove-button"
+                                            >
+                                                Remove
+                                            </button>
+                                    </div>
+                                ))}
+                                <button type="button" onClick={addIngredient} className="add-ingredient-button">Add Ingredient</button>
+                            </div>
 
-        {/* Flex container for ingredients and steps */}
-        <div className="form-layout">
-            {/* Ingredients Section */}
-            <div className="ingredients-section">
-                <h3>Ingredients</h3>
-                {newRecipe.ingredients.map((ingredient, index) => (
-                    <div key={index} className="ingredient-input-container">
-                        <input
-                            type="text"
-                            placeholder={`Ingredient ${index + 1}`}
-                            value={ingredient}
-                            onChange={(e) => handleIngredientChange(index, e.target.value)}
-                            required
-                            className="form-input"
-                        />
-                        <button type="button" onClick={() => removeIngredient(index)} className="remove-button">Remove</button>
-                    </div>
-                ))}
-                <button type="button" onClick={addIngredient} className="add-ingredient-button">Add Ingredient</button>
-            </div>
-
-            {/* Steps Section */}
-            <div className="steps-section">
-                <h3>Steps</h3>
-                {newRecipe.steps.map((step, index) => (
-                    <div key={index} className="step-input-container">
-                        <input
-                            type="text"
-                            placeholder={`Step ${index + 1}`}
-                            value={step}
-                            onChange={(e) => handleStepChange(index, e.target.value)}
-                            required
-                            className="form-input"
-                        />
-                        <button type="button" onClick={() => removeStep(index)} className="remove-button">Remove</button>
-                    </div>
-                ))}
-                <button type="button" onClick={addStep} className="add-step-button">Add Step</button>
-            </div>
-        </div>
-
-        <label>
-            <input
-                type="checkbox"
-                name="isPersonal"
-                checked={newRecipe.isPersonal}
-                onChange={(e) => setNewRecipe({ ...newRecipe, isPersonal: e.target.checked })}
-            />
-            Make Recipe Personal
-        </label>
-        {!newRecipe.isPersonal && (
-            <label>
-                Add Users (comma-separated usernames):
-                <input
-                    type="text"
-                    name="users"
-                    value={newRecipe.users}
-                    onChange={handleInputChange}
-                    placeholder="e.g., user1, user2"
-                    className="form-input"
-                />
-            </label>
-        )}
-        <button type="submit">Add Recipe</button>
-    </form>
-)}
-
-
-
-
+                            <div className="steps-section">
+                                <h3>Steps</h3>
+                                {newRecipe.steps.map((step, index) => (
+                                    <div key={index} className="step-input-container">
+                                        <textarea
+                                            placeholder={`Step ${index + 1}`}
+                                            value={step}
+                                            onChange={(e) => handleDynamicChange(index, e.target.value, "step")}
+                                            ref={(el) => stepsRefs.current[index] = el}
+                                            required
+                                            className="form-input"
+                                        />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeStep(index)}
+                                                className="remove-button"
+                                            >
+                                                Remove
+                                            </button>
+                                    </div>
+                                ))}
+                                <button type="button" onClick={addStep} className="add-step-button">Add Step</button>
+                            </div>
+                        </div>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="isPersonal"
+                                checked={newRecipe.isPersonal}
+                                onChange={(e) => setNewRecipe({ ...newRecipe, isPersonal: e.target.checked })}
+                            />
+                            Make Recipe Private
+                        </label>
+                        
+                        {!newRecipe.isPersonal && (
+                            <div className="add-users">
+                            <label>
+                                Add Users (comma-separated usernames):
+                                <textarea
+                                    placeholder="user1, user2, etc."
+                                    name="users"
+                                    value={newRecipe.users}
+                                    onChange={(e) => handleInputChange(e, sharedRefs)}
+                                    ref={sharedRefs}
+                                    required
+                                    className="form-input"
+                                />
+                            </label>
+                            </div>
+                        )}
+                        <button type="submit" onClick={handleFormSubmit} className="submit-button">Add Recipe</button>
+                    </form>
+                )}
             </div>
         </div>
     );

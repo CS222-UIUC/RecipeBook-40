@@ -6,7 +6,8 @@ html, body {
     height: 100%; /* Ensures the body takes the full height of the viewport */
     margin: 0; /* Remove default margin */
     padding: 0; /* Remove default padding */
-    font-family: "Architects Daughter", cursive; /* Set default font */
+    font-family: 'Montserrat', sans-serif;
+    overflow: hidden;
 }
 
 body {
@@ -19,26 +20,55 @@ body {
     box-sizing: border-box;
 }
 
+.form-input {
+    width: 100%;
+    min-height: 10px;
+    resize: none;
+    overflow: hidden;
+}
+
+.ingredients-section {
+    width: 100%; /* or another fixed width */
+    display: flex;
+    flex-direction: column;
+    /* align-items: flex-start; */
+}
+
+.steps-section {
+    width: 17%; /* or another fixed width */
+    display: flex;
+    flex-direction: column;
+    /* align-items: flex-start; */
+}
+
 /* NavBar styling */
 .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Ensures the navbar stays on top of other content */
+    width: 100%;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Optional shadow for a subtle effect */
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #870000; /* or #000000 */
+    background-color: rgb(213, 26, 54); /* or #000000 */
     color: #ffffff; /* White text for contrast */
-    width: 100%;
     position: fixed;
-    top: 0;
     left: 0;
     height: 60px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 .recipe-form {
+    overflow-y: auto;
+    box-shadow: 0 2px 5px rgba(213, 26, 54, 1);
+    max-height: 72.5vh;
+    font-family: 'Montserrat', sans-serif;
     display: flex;
     flex-direction: column;
+    padding:10px;
     gap: 20px; /* Space between form sections */
     max-width: 800px; /* Set a max width for the form */
     margin: 0 auto; /* Center the form horizontally */
@@ -64,6 +94,15 @@ body {
 
 .steps-section {
     /* Additional styles if needed */
+}
+
+.add-users label {
+    display: block;
+    margin-bottom: 10px; /* Add some space between the label and the input */
+}
+
+.add-users .form-input {
+    margin-top: 10px; /* Adds space between the label and input */
 }
 
 .ingredient-input-container,
@@ -92,7 +131,7 @@ body {
 
 
 .navbar-title {
-    font-size: 30px;
+    font-size: 20px;
     color: #ffffff;
 }
 
@@ -105,17 +144,17 @@ body {
 .logout-button {
     color: white;
     text-decoration: none;
-    font-size: 20px;
+    font-size: 15px;
     padding: 5px 10px;
     border: none;
     background: none;
     cursor: pointer;
-    font-family: "Architects Daughter", cursive;
+    font-family: 'Montserrat', sans-serif;
 }
 
 .logout-button:hover,
 .navbar-links a:hover {
-    color: #d51b37;
+    color: #9e9e9e;
 }
 
 .logout-button:disabled {
@@ -131,23 +170,36 @@ body {
 }
 
 .content {
+    padding-top: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     /* background-color: white; */
     margin: 100px 100px;
+
+    transform: scale(0.9);
+    margin: auto auto;
+    width: 600px;
+    background: #fff;
+    padding: 30px;
 }
 
 .add-recipe-button {
-    margin-top: 15px;
+    margin-bottom: 20px;
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    background-color: #870000;
+    color: #fff;
+    background: #d51b37;
+    border-radius: 50px;
     color: white;
     border: none;
-    border-radius: 5px;
+    width: 50%;
+}
+
+.add-recipe-button:hover {
+    background: #9c1327;
 }
 
 .recipe-form label {
@@ -168,25 +220,17 @@ body {
 .recipe-form button {
     margin-top: 10px;
     padding: 10px;
-    background-color: #870000;
+    color: #fff;
+    background: #d51b37;
+    border-radius: 50px;
     color: white;
     font-size: 16px;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
 }
 
 .recipe-form button:hover {
-    background-color: #d32f2f;
-}
-
-.form-input {
-    margin-top: 5px; /* Space between the label and input */
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%; /* Makes the input take the full width of its container */
+    background-color: #9c1327;
 }
 
 .step-input-container,
@@ -198,18 +242,17 @@ body {
 
 .remove-button {
     margin-left: 10px; /* Space between the input and the remove button */
-    padding: 5px 10px;
     background-color: #f44336; /* Red background for remove button */
     color: white;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
 }
 
 .add-step-button,
 .add-ingredient-button {
     padding: 5px 10px;
-    background-color: #870000; /* Background for add button */
+    color: #fff;
+    background: #d51b37;
     color: white;
     border: none;
     border-radius: 4px;
