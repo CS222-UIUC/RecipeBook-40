@@ -146,11 +146,11 @@ const RecipeBoard = () => {
 
         const form = e.target;
 
-    // Check form validity
-    if (!form.checkValidity()) {
-        form.reportValidity();  // This triggers the browser’s validation messages
-        return;
-    }
+        // Check form validity
+        if (!form.checkValidity()) {
+            form.reportValidity();  // This triggers the browser’s validation messages
+            return;
+        }
         try {
             const response = await axios.post("http://127.0.0.1:5000/add-recipe", newRecipe, { withCredentials: true });
             if (response.status === 200) {
@@ -299,7 +299,7 @@ const RecipeBoard = () => {
                             </label>
                             </div>
                         )}
-                        <button type="submit" onClick={handleFormSubmit} className="submit-button">Add Recipe</button>
+                        <button type="submit" className="submit-button">Add Recipe</button>
                     </form>
                 )}
             </div>
