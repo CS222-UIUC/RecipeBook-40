@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './Components/Home/Home';
 import LoginSignup from './Components/LoginSignup/LoginSignup';
 import RecipeBoard from './Components/Recipes/RecipeBoard';
+import CreateAccount from './Components/CreateAccount/CreateAccount';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginSignup />} />
         <Route path="/recipes" element={<RecipeBoard />} />
+        <Route path="/create-account" element={<CreateAccount />} />
         {/* <Route path="/my-recipes" element={<RecipeBoard />} />
         <Route path="/group-recipes" element={<RecipeBoard />} />
         <Route path="/meal-plans" element={<RecipeBoard />} />
