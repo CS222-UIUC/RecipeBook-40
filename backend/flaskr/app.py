@@ -44,14 +44,6 @@ class User(db.Model, UserMixin):
     def get_id(self):
         return self.id
 
-class Recipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    recipe = db.Column(db.JSON)
-
-    def get_id(self):
-        return str(self.id)
-
 # Routes
 @app.route('/auth-status', methods=['GET'])
 def auth_status():
@@ -67,7 +59,7 @@ def signup():
 
     # Hash the password using bcrypt
     salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'))
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
     new_user = User(
         username=data['username'],
         email=data['email'],
