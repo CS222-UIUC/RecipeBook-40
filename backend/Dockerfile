@@ -9,8 +9,10 @@ COPY . .
 # Setup env
 ENV PORT=443
 ENV FLASK_ENV=development
-ENV FLASK_APP=flaskr/__init__.py
+ENV FLASK_APP=flaskr/app.py
+ENV FLASK_RUN_PORT=443
 
 # Run service
 EXPOSE 443
-CMD ["python3", "./flaskr/__init__.py"]
+EXPOSE 5000
+CMD ["flask","run", "--host", "0.0.0.0"]
