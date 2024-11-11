@@ -10,8 +10,6 @@ const NavBar = ({ handleLogout, isLoggingOut }) => {
             <div className="navbar-links">
                 <Link to="/my-recipes">My Recipes</Link>
                 <Link to="/group-recipes">Group Recipes</Link>
-                <Link to="/meal-plans">Meal Plans</Link>
-                <Link to="/about">About Us</Link>
                 <Link to="/account">Account Information</Link>
                 <button onClick={handleLogout} disabled={isLoggingOut} className="logout-button">
                     {isLoggingOut ? "Logging Out..." : "Log Out"}
@@ -32,7 +30,8 @@ const RecipeBoard = () => {
         steps: [""],
         ingredients: [""],
         isPersonal: true,
-        users: ""
+        users: "",
+        isOwner: true,
     });
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -40,6 +39,7 @@ const RecipeBoard = () => {
     // Refs for dynamically resizing inputs
     const nameRef = useRef(null);
     const descriptionRef = useRef(null);
+    const ownerRef = useRef(null);
     const ingredientsRefs = useRef([]);
     const stepsRefs = useRef([]);
     const sharedRefs = useRef([]);
@@ -47,6 +47,7 @@ const RecipeBoard = () => {
 
     // Initial state for form reset
     const initialRecipeState = {
+        isOwner: true,
         name: "",
         description: "",
         steps: [""],
@@ -141,7 +142,15 @@ const RecipeBoard = () => {
     };
 
     const handleFormSubmit = async (e) => {
-        e.preventDefault();
+        // e.preventDefault();
+
+        const form = e.target;
+
+    // Check form validity
+    if (!form.checkValidity()) {
+        form.reportValidity();  // This triggers the browser’s validation messages
+        return;
+    }
         try {
             const response = await axios.post("http://127.0.0.1:5000/add-recipe", newRecipe, { withCredentials: true });
             if (response.status === 200) {
@@ -188,7 +197,7 @@ const RecipeBoard = () => {
             <div className="content">
                 <h2>Welcome to your Recipe Board, {username}!</h2>
                 <button onClick={toggleForm} className="add-recipe-button">
-                    {showForm ? "Close Form" : "Click here to add Recipes!"}
+                    {showForm ? "Close Form" : "Click Here to Add Recipes"}
                 </button>
 
                 {showForm && (
@@ -228,7 +237,6 @@ const RecipeBoard = () => {
                                             value={ingredient}
                                             onChange={(e) => handleDynamicChange(index, e.target.value, "ingredient")}
                                             ref={(el) => ingredientsRefs.current[index] = el}
-                                            required
                                             className="form-input"
                                         />
                                             <button
@@ -252,7 +260,6 @@ const RecipeBoard = () => {
                                             value={step}
                                             onChange={(e) => handleDynamicChange(index, e.target.value, "step")}
                                             ref={(el) => stepsRefs.current[index] = el}
-                                            required
                                             className="form-input"
                                         />
                                             <button
@@ -287,7 +294,6 @@ const RecipeBoard = () => {
                                     value={newRecipe.users}
                                     onChange={(e) => handleInputChange(e, sharedRefs)}
                                     ref={sharedRefs}
-                                    required
                                     className="form-input"
                                 />
                             </label>

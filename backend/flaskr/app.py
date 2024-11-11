@@ -99,7 +99,8 @@ def recipes():
                 "steps": recipe.steps,
                 "ingredients": recipe.ingredients,
                 "isPersonal": recipe.is_personal,
-                "users": recipe.users
+                "users": recipe.users,
+                "isOwner": recipe.isOwner
             }
             for recipe in recipes
         ]
@@ -113,6 +114,7 @@ class Recipe(db.Model):
     ingredients = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
     is_personal = db.Column(db.Boolean, nullable=False, default=True)
     users = db.Column(db.String, nullable=True)  # Store usernames as a comma-separated string
+    isOwner = db.Column(db.Boolean, nullable=False, default=True)
 
 # Route to add a recipe
 @app.route('/add-recipe', methods=['POST'])
@@ -126,7 +128,8 @@ def add_recipe():
         steps=data.get('steps'),
         ingredients=data.get('ingredients'),
         is_personal=data.get('isPersonal'),
-        users=data.get('users')
+        users=data.get('users'),
+        isOwner=data.get('isOwner')
     )
 
     # Save the new recipe to the database
