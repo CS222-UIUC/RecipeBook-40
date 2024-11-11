@@ -9,7 +9,7 @@ CORS(app, supports_credentials=True)  # Enable CORS for all routes
 app.config['SECRET_KEY'] = 'your_secret_key'  # Change this to a strong secret key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.config
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
@@ -25,6 +25,15 @@ class User(db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+    salt = db.Column(db.String(10), nullable=False)
+
+    def get_id(self):
+        return self.id
+
+class Recipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    recipe = db.Column(db.JSON)
 
     def get_id(self):
         return self.id
@@ -45,11 +54,13 @@ def signup():
         return jsonify(message="Email or username already exists."), 400  # Return an error message
 
     # Hash the password using bcrypt
-    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'))
     new_user = User(
         username=data['username'],
         email=data['email'],
-        password=hashed_password.decode('utf-8')  # Store as string
+        password=hashed_password.decode('utf-8'),  # Store as string
+        salt=salt
     )
     db.session.add(new_user)
     db.session.commit()
@@ -80,5 +91,15 @@ def reset_db():
     db.create_all()  # This recreates all tables
     return jsonify(message="Database has been reset.")
 
+
+@app.route("/recipes", methods=["GET"])
+def get_recipe_list():
+    return jsonify(message=db.session.query(Recipe).all())
+
+@app.route("/recipes/populate", methods=["GET"])
+def populate_recipes():
+    # Add a few recipes: TODO    
+    return jsonify(message="Ok")
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=443)
