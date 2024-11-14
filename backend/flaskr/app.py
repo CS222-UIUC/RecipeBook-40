@@ -1,26 +1,39 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-import bcrypt  # Import bcrypt for hashing
+from flask_session import Session
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
+import bcrypt
+from datetime import timedelta
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)  # Enable CORS for all routes
-app.config['SECRET_KEY'] = 'your_secret_key'  # Change this to a strong secret key
+CORS(app, supports_credentials=True)
+
+# Configurations
+app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 db = SQLAlchemy(app)
+Session(app)  # Initialize session management
 
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Custom unauthorized handler for API response
+@login_manager.unauthorized_handler
+def unauthorized():
+    return jsonify({"error": "You must be logged in to access this resource"}), 401
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# User Model
-class User(db.Model):
+# User model
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -36,22 +49,21 @@ class Recipe(db.Model):
     recipe = db.Column(db.JSON)
 
     def get_id(self):
-        return self.id
+        return str(self.id)
 
-# Create the database
-with app.app_context():
-    db.create_all()
-
-@app.route('/')
-def home():
-    return jsonify(message="Welcome to the Flask API!")
+# Routes
+@app.route('/auth-status', methods=['GET'])
+def auth_status():
+    return jsonify(isAuthenticated=current_user.is_authenticated)
 
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
-    # Check if the username or email already exists
-    if User.query.filter_by(email=data['email']).first() or User.query.filter_by(username=data['username']).first():
-        return jsonify(message="Email or username already exists."), 400  # Return an error message
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify(message="Username already exists."), 400
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify(message="Email already exists."), 400
+
 
     # Hash the password using bcrypt
     salt = bcrypt.gensalt()
@@ -69,27 +81,32 @@ def signup():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(email=data['email']).first()
+    user = User.query.filter_by(username=data['username']).first()
     
     if user and bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-        session['user_id'] = user.id  # Store user ID in session
+        login_user(user)
+        session.permanent = True  # Set session to be permanent
         return jsonify(message="Login successful")
-    return jsonify(message="Invalid email or password"), 401
+    return jsonify(message="Invalid username or password"), 401
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('user_id', None)  # Remove user ID from session
+    session.clear()
+    logout_user()
     return jsonify(message="Logged out successfully")
 
-@app.route('/auth-status', methods=['GET'])
-def auth_status():
-    return jsonify(isAuthenticated='user_id' in session)
-
-@app.route('/reset-db', methods=['POST'])
-def reset_db():
-    db.drop_all()  # This drops all tables
-    db.create_all()  # This recreates all tables
-    return jsonify(message="Database has been reset.")
+@app.route('/recipes', methods=['GET', 'POST'])
+@login_required
+def recipes():
+    if request.method == 'POST':
+        return jsonify(message=f"Welcome to your Recipe Board, {current_user.username}!")
+    elif request.method == 'GET':
+        recipes = [
+            {"id": 1, "title": "Spaghetti Carbonara", "description": "A classic Italian pasta dish."},
+            {"id": 2, "title": "Chicken Tikka Masala", "description": "A flavorful, spiced Indian curry."},
+            {"id": 3, "title": "Avocado Toast", "description": "Simple and delicious avocado toast."}
+        ]
+        return jsonify({"recipes": recipes})
 
 
 @app.route("/recipes", methods=["GET"])
