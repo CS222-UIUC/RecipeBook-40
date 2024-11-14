@@ -13,7 +13,6 @@ CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../database.sql'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 db = SQLAlchemy(app)
@@ -57,6 +56,10 @@ def signup():
     if User.query.filter_by(email=data['email']).first():
         return jsonify(message="Email already exists."), 400
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> f81fed6717b076c9e91f74f47ee8e30f50777a89
     # Hash the password using bcrypt
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
