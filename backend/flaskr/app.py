@@ -11,8 +11,9 @@ CORS(app, supports_credentials=True)
 
 # Configurations
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../database.sql'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 db = SQLAlchemy(app)
@@ -43,14 +44,6 @@ class User(db.Model, UserMixin):
     def get_id(self):
         return self.id
 
-class Recipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    recipe = db.Column(db.JSON)
-
-    def get_id(self):
-        return str(self.id)
-
 # Routes
 @app.route('/auth-status', methods=['GET'])
 def auth_status():
@@ -64,10 +57,9 @@ def signup():
     if User.query.filter_by(email=data['email']).first():
         return jsonify(message="Email already exists."), 400
 
-
     # Hash the password using bcrypt
     salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'))
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
     new_user = User(
         username=data['username'],
         email=data['email'],
@@ -101,12 +93,54 @@ def recipes():
     if request.method == 'POST':
         return jsonify(message=f"Welcome to your Recipe Board, {current_user.username}!")
     elif request.method == 'GET':
-        recipes = [
-            {"id": 1, "title": "Spaghetti Carbonara", "description": "A classic Italian pasta dish."},
-            {"id": 2, "title": "Chicken Tikka Masala", "description": "A flavorful, spiced Indian curry."},
-            {"id": 3, "title": "Avocado Toast", "description": "Simple and delicious avocado toast."}
+        # Retrieve recipes from the database
+        recipes = Recipe.query.all()
+        recipe_list = [
+            {
+                "id": recipe.id,
+                "name": recipe.name,
+                "description": recipe.description,
+                "steps": recipe.steps,
+                "ingredients": recipe.ingredients,
+                "isPersonal": recipe.is_personal,
+                "users": recipe.users,
+                "isOwner": recipe.isOwner
+            }
+            for recipe in recipes
         ]
-        return jsonify({"recipes": recipes})
+        return jsonify({"recipes": recipe_list})
+
+class Recipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    steps = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
+    ingredients = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
+    is_personal = db.Column(db.Boolean, nullable=False, default=True)
+    users = db.Column(db.String, nullable=True)  # Store usernames as a comma-separated string
+    isOwner = db.Column(db.Boolean, nullable=False, default=True)
+
+# Route to add a recipe
+@app.route('/add-recipe', methods=['POST'])
+def add_recipe():
+    data = request.get_json()  # Get data sent from the frontend
+
+    # Parse the received data
+    new_recipe = Recipe(
+        name=data.get('name'),
+        description=data.get('description'),
+        steps=data.get('steps'),
+        ingredients=data.get('ingredients'),
+        is_personal=data.get('isPersonal'),
+        users=data.get('users'),
+        isOwner=data.get('isOwner')
+    )
+
+    # Save the new recipe to the database
+    db.session.add(new_recipe)
+    db.session.commit()
+
+    return jsonify({"message": "Recipe added successfully"}), 200
 
 
 @app.route("/recipes", methods=["GET"])
@@ -119,4 +153,6 @@ def populate_recipes():
     return jsonify(message="Ok")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=443)
+    with app.app_context():
+        db.create_all()  # Create tables if they don't exist
+    app.run(debug=True)
