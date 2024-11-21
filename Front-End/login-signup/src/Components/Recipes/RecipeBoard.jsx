@@ -2,6 +2,9 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import './RecipeBoard.css';
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = 'http://127.0.0.1:5000';
+
 
 const NavBar = ({ handleLogout, isLoggingOut }) => {
     return (
@@ -31,7 +34,7 @@ const RecipeBoard = () => {
         ingredients: [""],
         isPersonal: true,
         users: "",
-        isOwner: true,
+        owner: "",
     });
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -47,7 +50,7 @@ const RecipeBoard = () => {
 
     // Initial state for form reset
     const initialRecipeState = {
-        isOwner: true,
+        owner: {username},
         name: "",
         description: "",
         steps: [""],
