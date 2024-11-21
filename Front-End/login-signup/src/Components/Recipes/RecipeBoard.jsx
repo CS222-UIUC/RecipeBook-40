@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import './RecipeBoard.css';
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:5000';
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import "./RecipeBoard.css";
 
+axios.defaults.baseURL = "http://127.0.0.1:5000";
 
 const NavBar = ({ handleLogout, isLoggingOut }) => {
     return (
@@ -24,8 +23,9 @@ const NavBar = ({ handleLogout, isLoggingOut }) => {
 
 const RecipeBoard = () => {
     const [recipes, setRecipes] = useState([]);
+    const [sharedRecipes, setSharedRecipes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("isAuthenticated") === "true");
+    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("token") !== null);
     const [showForm, setShowForm] = useState(false);
     const [newRecipe, setNewRecipe] = useState({
         name: "",
@@ -34,7 +34,6 @@ const RecipeBoard = () => {
         ingredients: [""],
         isPersonal: true,
         users: "",
-        owner: "",
     });
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -42,21 +41,18 @@ const RecipeBoard = () => {
     // Refs for dynamically resizing inputs
     const nameRef = useRef(null);
     const descriptionRef = useRef(null);
-    const ownerRef = useRef(null);
     const ingredientsRefs = useRef([]);
     const stepsRefs = useRef([]);
     const sharedRefs = useRef([]);
     const username = localStorage.getItem("username");
 
-    // Initial state for form reset
     const initialRecipeState = {
-        owner: {username},
         name: "",
         description: "",
         steps: [""],
         ingredients: [""],
         isPersonal: true,
-        users: ""
+        users: "",
     };
 
     const adjustHeight = (ref) => {
@@ -81,15 +77,34 @@ const RecipeBoard = () => {
         adjustHeight(refList.current[index]);
     };
 
-    useEffect(() => {
-        ingredientsRefs.current.forEach((ref) => adjustHeight(ref));
-        stepsRefs.current.forEach((ref) => adjustHeight(ref));
-    }, [newRecipe.ingredients, newRecipe.steps]);
+    const fetchRecipes = async () => {
+        const token = localStorage.getItem("token");
+        try {
+            const res = await axios.get("/recipes", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setRecipes(res.data.recipes);
+        } catch (error) {
+            console.error("Error fetching recipes:", error);
+        }
+    };
+
+    const fetchSharedRecipes = async () => {
+        const token = localStorage.getItem("token");
+        try {
+            const res = await axios.get("/shared-recipes", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setSharedRecipes(res.data.shared_recipes);
+        } catch (error) {
+            console.error("Error fetching shared recipes:", error);
+        }
+    };
 
     const addIngredient = () => {
         setNewRecipe((prevRecipe) => ({
             ...prevRecipe,
-            ingredients: [...prevRecipe.ingredients, ""]
+            ingredients: [...prevRecipe.ingredients, ""],
         }));
     };
 
@@ -97,7 +112,7 @@ const RecipeBoard = () => {
         if (newRecipe.ingredients.length > 1) {
             setNewRecipe((prevRecipe) => ({
                 ...prevRecipe,
-                ingredients: prevRecipe.ingredients.filter((_, i) => i !== index)
+                ingredients: prevRecipe.ingredients.filter((_, i) => i !== index),
             }));
         }
     };
@@ -105,7 +120,7 @@ const RecipeBoard = () => {
     const addStep = () => {
         setNewRecipe((prevRecipe) => ({
             ...prevRecipe,
-            steps: [...prevRecipe.steps, ""]
+            steps: [...prevRecipe.steps, ""],
         }));
     };
 
@@ -113,82 +128,65 @@ const RecipeBoard = () => {
         if (newRecipe.steps.length > 1) {
             setNewRecipe((prevRecipe) => ({
                 ...prevRecipe,
-                steps: prevRecipe.steps.filter((_, i) => i !== index)
+                steps: prevRecipe.steps.filter((_, i) => i !== index),
             }));
         }
     };
 
     const handleLogout = async () => {
-        setIsLoggingOut(true);
+        const token = localStorage.getItem("token");
         try {
-            const response = await axios.post("http://127.0.0.1:5000/logout", {}, { withCredentials: true });
-            if (response.status === 200) {
-                localStorage.removeItem("isAuthenticated");
-                setIsAuthenticated(false);
-                navigate("/login");
-            } else {
-                console.error("Unexpected response during logout:", response);
-            }
+            await axios.post(
+                "/logout",
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            navigate("/login");
         } catch (error) {
-            console.error("Failed to log out:", error);
-        } finally {
-            setIsLoggingOut(false);
+            console.error("Error during logout:", error.response?.data || error.message);
         }
     };
 
     const toggleForm = () => {
         if (showForm) {
-            // Reset the form when closing
             setNewRecipe(initialRecipeState);
         }
         setShowForm(!showForm);
     };
 
     const handleFormSubmit = async (e) => {
-        // e.preventDefault();
-
-        const form = e.target;
-
-        // Check form validity
-        if (!form.checkValidity()) {
-            form.reportValidity();  // This triggers the browser’s validation messages
-            return;
-        }
+        e.preventDefault();
+        const token = localStorage.getItem("token");
         try {
-            const response = await axios.post("http://127.0.0.1:5000/add-recipe", newRecipe, { withCredentials: true });
+            const response = await axios.post("/add-recipe", newRecipe, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (response.status === 200) {
-                setRecipes([...recipes, newRecipe]);
+                setRecipes([...recipes, response.data.recipe]);
                 setNewRecipe(initialRecipeState);
                 setShowForm(false);
             }
         } catch (error) {
-            console.error("Error adding recipe:", error);
+            console.error("Error adding recipe:", error.response?.data || error.message);
         }
     };
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            const checkAuthStatus = async () => {
-                try {
-                    const authResponse = await axios.get("http://127.0.0.1:5000/auth-status", { withCredentials: true });
-                    if (authResponse.data.isAuthenticated) {
-                        setIsAuthenticated(true);
-                        localStorage.setItem("isAuthenticated", "true");
-                    } else {
-                        navigate("/login");
-                    }
-                } catch (error) {
-                    console.error("Error checking authentication status:", error);
-                    navigate("/login");
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            checkAuthStatus();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
         } else {
+            fetchRecipes();
+            fetchSharedRecipes();
             setIsLoading(false);
         }
-    }, [isAuthenticated, navigate]);
+    }, [navigate]);
 
     if (isLoading) {
         return <p>Loading...</p>;
