@@ -44,6 +44,12 @@ class User(db.Model, UserMixin):
     def get_id(self):
         return self.id
 
+class RecipeUserAssociation(db.Model):
+    __tablename__ = 'recipe_user_association'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'))
+
 # Routes
 @app.route('/auth-status', methods=['GET'])
 def auth_status():
@@ -94,7 +100,11 @@ def recipes():
         return jsonify(message=f"Welcome to your Recipe Board, {current_user.username}!")
     elif request.method == 'GET':
         # Retrieve recipes from the database
+        # recipes = Recipe.query.filter( (Recipe.users.contains(current_user.username))).all()
         recipes = Recipe.query.all()
+        filtered_recipes = [
+            recipe for recipe in recipes if current_user.username in recipe.users
+        ]
         recipe_list = [
             {
                 "id": recipe.id,
@@ -104,11 +114,35 @@ def recipes():
                 "ingredients": recipe.ingredients,
                 "isPersonal": recipe.is_personal,
                 "users": recipe.users,
-                "isOwner": recipe.isOwner
+                "owner": recipe.owner
             }
-            for recipe in recipes
+            for recipe in filtered_recipes
         ]
         return jsonify({"recipes": recipe_list})
+
+@app.route('/shared-recipes', methods=['GET'])
+@login_required
+def sharedRecipes():
+    # Retrieve recipes from the database
+    # recipes = Recipe.query.filter( (Recipe.users.contains(current_user.username))).all()
+    recipes = Recipe.query.all()
+    filtered_recipes = [
+        recipe for recipe in recipes if (current_user.username in recipe.users and current_user.username != recipe.owner)
+    ]
+    recipe_list = [
+        {
+            "id": recipe.id,
+            "name": recipe.name,
+            "description": recipe.description,
+            "steps": recipe.steps,
+            "ingredients": recipe.ingredients,
+            "isPersonal": recipe.is_personal,
+            "users": recipe.users,
+            "owner": recipe.owner
+        }
+        for recipe in filtered_recipes
+    ]
+    return jsonify({"recipes": recipe_list})
 
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -117,40 +151,58 @@ class Recipe(db.Model):
     steps = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
     ingredients = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
     is_personal = db.Column(db.Boolean, nullable=False, default=True)
-    users = db.Column(db.String, nullable=True)  # Store usernames as a comma-separated string
-    isOwner = db.Column(db.Boolean, nullable=False, default=True)
+    users = db.Column(db.PickleType, nullable=False)  # Store usernames as a comma-separated string
+    owner = db.Column(db.String, nullable=False)
 
 # Route to add a recipe
+
 @app.route('/add-recipe', methods=['POST'])
+@login_required
 def add_recipe():
-    data = request.get_json()  # Get data sent from the frontend
-
+    data = request.get_json()
+    print(data)
     # Parse the received data
+    name = data.get('name')
+    description = data.get('description')
+    steps = data.get('steps')
+    ingredients = data.get('ingredients')
+    is_personal = data.get('isPersonal')
+    users = data.get('users', "")  # List of usernames
+    owner = current_user.username
+    users = users.split(",")
+    users = [user.strip() for user in users]
+    users.append(current_user.username)
     new_recipe = Recipe(
-        name=data.get('name'),
-        description=data.get('description'),
-        steps=data.get('steps'),
-        ingredients=data.get('ingredients'),
-        is_personal=data.get('isPersonal'),
-        users=data.get('users'),
-        isOwner=data.get('isOwner')
+        name=name,
+        description=description,
+        steps=steps,
+        ingredients=ingredients,
+        is_personal=is_personal,
+        users=users,
+        owner=owner
     )
-
-    # Save the new recipe to the database
     db.session.add(new_recipe)
     db.session.commit()
+    shared_with = []
 
-    return jsonify({"message": "Recipe added successfully"}), 200
+    for username in users:
+        if username == current_user.username:
+            continue
+        username = username.strip()
+        user = User.query.filter_by(username=username).first()
+        if user:
+            shared_with.append(username)
+        else:
+            print(f"User {username} does not exist.")
 
+    db.session.commit()
 
-@app.route("/recipes", methods=["GET"])
-def get_recipe_list():
-    return jsonify(message=db.session.query(Recipe).all())
-
-@app.route("/recipes/populate", methods=["GET"])
-def populate_recipes():
-    # Add a few recipes: TODO    
-    return jsonify(message="Ok")
+    return jsonify({
+        "message": "Recipe added successfully",
+        "shared_with": shared_with,
+        "owner": owner,
+        "users": users
+    }), 200
 
 if __name__ == '__main__':
     with app.app_context():
