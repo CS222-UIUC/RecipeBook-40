@@ -142,6 +142,25 @@ def add_recipe():
 
     return jsonify({"message": "Recipe added successfully"}), 200
 
+@app.route("/recipe/gather", methods=['POST'])
+def check_recipe():
+    data = request.get_json()
+    ingredients = data.get('ingredients')
+    # Now parse through all the recipes that the user has and check for the right incredient
+    recipe_available_list = []
+    for rec in db.session.query(Recipe).all():
+        # Compare if everything 
+        okay = True
+        for k, v in rec.ingredients.items():
+            if k not in ingredients:
+                okay = False
+                break
+            if ingredients[k] < v:
+                okay = False
+                break
+        if okay:
+            recipe_available_list.append(rec.id)
+    return jsonify({"message": recipe_available_list})
 
 @app.route("/recipes", methods=["GET"])
 def get_recipe_list():
