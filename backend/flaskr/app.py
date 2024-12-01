@@ -1,100 +1,184 @@
-from flask import Flask, request, jsonify, session
-from flask_cors import CORS
+from flask import Flask, request, jsonify
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
-from flask_session import Session
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
+from flask_cors import CORS
 import bcrypt
-from datetime import timedelta
 
+
+
+# App Configuration
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
-
-# Configurations
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../database.sql'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 db = SQLAlchemy(app)
-Session(app)  # Initialize session management
+CORS(app, supports_credentials=True)
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
-# Custom unauthorized handler for API response
-@login_manager.unauthorized_handler
-def unauthorized():
-    return jsonify({"error": "You must be logged in to access this resource"}), 401
+# JWT Configuration
+JWT_SECRET_KEY = 'your_jwt_secret_key'
+JWT_EXPIRATION_DELTA = timedelta(hours=1)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+# In-memory blacklist for tokens
+blacklisted_tokens = set()
 
-# User model
-class User(db.Model, UserMixin):
+# Models
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     salt = db.Column(db.String(10), nullable=False)
 
-    def get_id(self):
-        return self.id
+class Recipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    steps = db.Column(db.PickleType, nullable=False)
+    ingredients = db.Column(db.PickleType, nullable=False)
+    is_personal = db.Column(db.Boolean, nullable=False, default=True)
+    users = db.Column(db.PickleType, nullable=False)
+    owner = db.Column(db.String, nullable=False)
+
+# JWT Utilities
+def generate_jwt(user_id):
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.utcnow() + JWT_EXPIRATION_DELTA
+    }
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
+    return token
+
+def verify_jwt(token):
+    if token in blacklisted_tokens:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload['user_id']
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+def jwt_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"message": "Missing or invalid token"}), 401
+        
+        token = auth_header.split(" ")[1]
+        user_id = verify_jwt(token)
+        if not user_id:
+            return jsonify({"message": "Invalid or expired token"}), 401
+        
+        # Attach user_id to the request context
+        request.user_id = user_id
+        return func(*args, **kwargs)
+    return wrapper
 
 # Routes
-@app.route('/auth-status', methods=['GET'])
-def auth_status():
-    return jsonify(isAuthenticated=current_user.is_authenticated)
-
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
+
+    # Check if the username or email already exists
     if User.query.filter_by(username=data['username']).first():
         return jsonify(message="Username already exists."), 400
     if User.query.filter_by(email=data['email']).first():
         return jsonify(message="Email already exists."), 400
 
-    # Hash the password using bcrypt
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+    # Generate salt and hash the password
+    salt = bcrypt.gensalt().decode('utf-8')
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
+
+    # Create and save the user
     new_user = User(
         username=data['username'],
         email=data['email'],
-        password=hashed_password.decode('utf-8'),  # Store as string
+        password=hashed_password,
         salt=salt
     )
     db.session.add(new_user)
     db.session.commit()
+
     return jsonify(message="Sign-up successful!")
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data['username']).first()
-    
-    if user and bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-        login_user(user)
-        session.permanent = True  # Set session to be permanent
-        return jsonify(message="Login successful")
-    return jsonify(message="Invalid username or password"), 401
+
+    if not user:
+        return jsonify({"message": "Invalid username or password"}), 401
+
+    # Hash the provided password using the stored salt
+    provided_password_hashed = bcrypt.hashpw(data['password'].encode('utf-8'), user.salt.encode('utf-8')).decode('utf-8')
+
+    # Compare the hashed password
+    if provided_password_hashed == user.password:
+        # Generate a JWT token upon successful login
+        token = generate_jwt(user.id)
+        return jsonify({
+            "message": "Login successful",
+            "token": token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        }), 200
+
+    return jsonify({"message": "Invalid username or password"}), 401
+
+
+@app.route('/auth-status', methods=['GET'])
+@jwt_required
+def auth_status():
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({"isAuthenticated": False}), 401
+    return jsonify({
+        "isAuthenticated": True,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    }), 200
 
 @app.route('/logout', methods=['POST'])
+@jwt_required
 def logout():
-    session.clear()
-    logout_user()
-    return jsonify(message="Logged out successfully")
+    token = request.headers.get('Authorization').split(" ")[1]
+    blacklisted_tokens.add(token)
+    return jsonify({"message": "Logged out successfully"}), 200
 
 @app.route('/recipes', methods=['GET', 'POST'])
-@login_required
+@jwt_required
 def recipes():
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
     if request.method == 'POST':
-        return jsonify(message=f"Welcome to your Recipe Board, {current_user.username}!")
+        data = request.get_json()
+        new_recipe = Recipe(
+            name=data['name'],
+            description=data['description'],
+            steps=data['steps'],
+            ingredients=data['ingredients'],
+            is_personal=data['isPersonal'],
+            users=data['users'],
+            owner=user.username
+        )
+        db.session.add(new_recipe)
+        db.session.commit()
+        return jsonify({"message": "Recipe added successfully!"}), 200
+
     elif request.method == 'GET':
-        # Retrieve recipes from the database
-        recipes = Recipe.query.all()
+        recipes = Recipe.query.filter_by(owner=user.username).all()
         recipe_list = [
             {
                 "id": recipe.id,
@@ -104,55 +188,62 @@ def recipes():
                 "ingredients": recipe.ingredients,
                 "isPersonal": recipe.is_personal,
                 "users": recipe.users,
-                "isOwner": recipe.isOwner
+                "owner": recipe.owner
             }
             for recipe in recipes
         ]
         return jsonify({"recipes": recipe_list})
 
-class Recipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    steps = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
-    ingredients = db.Column(db.PickleType, nullable=False)  # Or a different type if preferred
-    is_personal = db.Column(db.Boolean, nullable=False, default=True)
-    users = db.Column(db.String, nullable=True)  # Store usernames as a comma-separated string
-    isOwner = db.Column(db.Boolean, nullable=False, default=True)
-
-# Route to add a recipe
 @app.route('/add-recipe', methods=['POST'])
+@jwt_required
 def add_recipe():
-    data = request.get_json()  # Get data sent from the frontend
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
 
-    # Parse the received data
+    data = request.get_json()
     new_recipe = Recipe(
-        name=data.get('name'),
-        description=data.get('description'),
-        steps=data.get('steps'),
-        ingredients=data.get('ingredients'),
-        is_personal=data.get('isPersonal'),
-        users=data.get('users'),
-        isOwner=data.get('isOwner')
+        name=data['name'],
+        description=data['description'],
+        steps=data['steps'],
+        ingredients=data['ingredients'],
+        is_personal=data['isPersonal'],
+        users=data['users'],
+        owner=user.username
     )
-
-    # Save the new recipe to the database
     db.session.add(new_recipe)
     db.session.commit()
 
-    return jsonify({"message": "Recipe added successfully"}), 200
+    return jsonify({"message": "Recipe added successfully!"}), 200
 
+@app.route('/shared-recipes', methods=['GET'])
+@jwt_required
+def shared_recipes():
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
 
-@app.route("/recipes", methods=["GET"])
-def get_recipe_list():
-    return jsonify(message=db.session.query(Recipe).all())
+    # Fetch recipes where the user is part of the `users` field but not the owner
+    shared_recipes = Recipe.query.filter(Recipe.users.contains(user.username)).filter(Recipe.owner != user.username).all()
 
-@app.route("/recipes/populate", methods=["GET"])
-def populate_recipes():
-    # Add a few recipes: TODO    
-    return jsonify(message="Ok")
+    recipe_list = [
+        {
+            "id": recipe.id,
+            "name": recipe.name,
+            "description": recipe.description,
+            "steps": recipe.steps,
+            "ingredients": recipe.ingredients,
+            "isPersonal": recipe.is_personal,
+            "users": recipe.users,
+            "owner": recipe.owner
+        }
+        for recipe in shared_recipes
+    ]
+
+    return jsonify({"shared_recipes": recipe_list}), 200
+
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create tables if they don't exist
+        db.create_all()
     app.run(debug=True)
