@@ -4,12 +4,14 @@ import Home from './Components/Home/Home';
 import LoginSignup from './Components/LoginSignup/LoginSignup';
 import RecipeBoard from './Components/Recipes/RecipeBoard';
 import CreateAccount from './Components/CreateAccount/CreateAccount';
+import MyRecipes from './Components/MyRecipes/MyRecipes';
 
 function App() {
   return (
     <div className="App">
     <Router>
       <Routes>
+        <Route path="/my-recipes" element={<MyRecipes />} />
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginSignup />} />
         <Route path="/recipes" element={<RecipeBoard />} />
