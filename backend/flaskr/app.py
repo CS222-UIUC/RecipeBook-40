@@ -194,6 +194,38 @@ def recipes():
         ]
         return jsonify({"recipes": recipe_list})
 
+@app.route('/recipes/<int:recipe_id>', methods=['GET'])
+@jwt_required
+def get_recipe(recipe_id):
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    # Fetch the recipe by ID
+    recipe = Recipe.query.get(recipe_id)
+    if not recipe:
+        return jsonify({"message": "Recipe not found"}), 404
+
+    # Ensure the recipe belongs to the user or is shared with them
+    if recipe.owner != user.username and user.username not in recipe.users:
+        return jsonify({"message": "Unauthorized"}), 403
+
+    recipe.ingredients = [thing for thing in recipe.ingredients if thing]
+    recipe.steps = [thing for thing in recipe.steps if thing]
+
+    return jsonify({
+        "recipe": {
+            "id": recipe.id,
+            "name": recipe.name,
+            "description": recipe.description,
+            "ingredients": recipe.ingredients if recipe.ingredients else [],
+            "steps": recipe.steps if recipe.steps else [],
+            "isPersonal": recipe.is_personal,
+            "users": recipe.users,
+            "owner": recipe.owner
+        }
+    }), 200
+
 @app.route('/add-recipe', methods=['POST'])
 @jwt_required
 def add_recipe():
@@ -224,7 +256,7 @@ def shared_recipes():
         return jsonify({"message": "User not found"}), 404
 
     # Fetch recipes where the user is part of the `users` field but not the owner
-    shared_recipes = Recipe.query.filter(Recipe.users.contains(user.username)).filter(Recipe.owner != user.username).all()
+    shared_recipes = Recipe.query.filter_by(owner=user.username).filter(Recipe.is_personal != True).all()
 
     recipe_list = [
         {
@@ -240,7 +272,7 @@ def shared_recipes():
         for recipe in shared_recipes
     ]
 
-    return jsonify({"shared_recipes": recipe_list}), 200
+    return jsonify({"recipes": recipe_list}), 200
 
 
 if __name__ == '__main__':

@@ -58,6 +58,7 @@ const LoginSignup = () => {
                 const token = res.data.token;
                 if (token) {
                     localStorage.setItem("token", token);
+                    localStorage.setItem("username", username);
                     setIsAuthenticated(true);
                     navigate("/recipes");
                 }

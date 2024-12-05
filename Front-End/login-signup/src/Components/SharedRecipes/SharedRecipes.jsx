@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import "./MyRecipes.css";
+import "./SharedRecipes.css";
 
 axios.defaults.baseURL = "http://127.0.0.1:5000";
 
@@ -25,7 +25,7 @@ const NavBar = ({ handleLogout, isLoggingOut }) => {
 
 
 
-const MyRecipes = () => {
+const SharedRecipes = () => {
     const [recipes, setRecipes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
@@ -59,7 +59,7 @@ const MyRecipes = () => {
             }
 
             try {
-                const res = await axios.get("/recipes", {
+                const res = await axios.get("/shared-recipes", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setRecipes(res.data.recipes);
@@ -101,4 +101,4 @@ const MyRecipes = () => {
     );
 };
 
-export default MyRecipes;
+export default SharedRecipes;
