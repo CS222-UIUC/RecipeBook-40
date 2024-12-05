@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./SharedRecipes.css";
 
 axios.defaults.baseURL = "http://127.0.0.1:5000";
-
 
 const NavBar = ({ handleLogout, isLoggingOut }) => {
     return (
@@ -22,8 +21,6 @@ const NavBar = ({ handleLogout, isLoggingOut }) => {
         </nav>
     );
 };
-
-
 
 const SharedRecipes = () => {
     const [recipes, setRecipes] = useState([]);
@@ -57,11 +54,12 @@ const SharedRecipes = () => {
                 navigate("/login");
                 return;
             }
-
+    
             try {
                 const res = await axios.get("/shared-recipes", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
+                console.log("Fetched recipes:", res.data.recipes); // Check the API response
                 setRecipes(res.data.recipes);
                 setIsLoading(false);
             } catch (error) {
@@ -69,9 +67,10 @@ const SharedRecipes = () => {
                 navigate("/login");
             }
         };
-
+    
         fetchRecipes();
     }, [navigate]);
+    
 
     if (isLoading) {
         return <p>Loading...</p>;
@@ -79,18 +78,20 @@ const SharedRecipes = () => {
 
     return (
         <div className="my-recipes-page">
-            {/* Pass handleLogout as a prop */}
             <NavBar handleLogout={handleLogout} isLoggingOut={false} />
             <div className="recipe-container">
-            {recipes.length > 0 ? (
+                {recipes.length > 0 ? (
                     recipes.map((recipe) => (
                         <div
                             key={recipe.id}
                             className="recipe-card"
-                            onClick={() => navigate(`/recipes/${recipe.id}`)} // Navigate to details page
+                            onClick={() => navigate(`/recipes/${recipe.id}`)}
                         >
                             <h3>{recipe.name}</h3>
                             <p>{recipe.description}</p>
+                            {recipe.owner && (
+                                <p><em>Owner:{recipe.owner}</em></p>
+                            )}
                         </div>
                     ))
                 ) : (

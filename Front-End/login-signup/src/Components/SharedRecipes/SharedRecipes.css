@@ -1,0 +1,58 @@
+/* General page container */
+.my-recipes-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Make the page take up the full height */
+    padding: 20px;
+}
+
+/* Recipe container */
+.recipe-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Space between cards */
+    justify-content: center; /* Center all cards */
+    align-items: center; /* Align cards vertically in the middle */
+    width: 100%;
+}
+
+/* Recipe card */
+.recipe-card {
+    border: 1px solid #ddd;
+    padding: 16px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 250px;
+    height: auto; /* Allow height to grow */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    gap: 8px; /* Space between card elements */
+}
+
+.recipe-card:hover {
+    background-color: #d1d1d1; /* Darker background on hover */
+    transform: scale(1.05);
+}
+
+/* Recipe text elements */
+.recipe-card h3 {
+    margin: 8px 0 4px 0; /* Reduce margin to make text closer */
+    font-size: 1.5rem;
+    color: #333;
+    word-wrap: break-word; /* Ensure long text wraps properly */
+}
+
+.recipe-card p {
+    margin: 4px 0; /* Reduce space between description and other elements */
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.2; /* Reduce line height to make text more compact */
+    word-wrap: break-word;
+}
