@@ -256,7 +256,9 @@ def shared_recipes():
         return jsonify({"message": "User not found"}), 404
 
     # Fetch recipes where the user is part of the `users` field but not the owner
-    shared_recipes = Recipe.query.filter_by(owner=user.username).filter(Recipe.is_personal != True).all()
+    shared_recipes = Recipe.query.filter(
+        Recipe.is_personal == False
+    ).all()
 
     recipe_list = [
         {
