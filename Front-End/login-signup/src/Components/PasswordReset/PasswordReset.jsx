@@ -75,6 +75,7 @@ const PasswordReset = () => {
           />
         </div>
         {error && <p className="password-reset-error">{error}</p>}
+        {message && <p className="password-reset-error">{message}</p>}
         <div>
         <button class="password-reset-button">
           Reset Password
@@ -87,7 +88,6 @@ const PasswordReset = () => {
         Back to Login
       </button>
       </div>
-      {message && <p style={{ color: "green" }}>{message}</p>}
       </form>
     </div>
   );
