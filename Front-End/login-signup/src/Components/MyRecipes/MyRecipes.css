@@ -1,0 +1,57 @@
+.recipe-card {
+    border: 1px solid #ddd;
+    /* border-radius: 8px; */
+    padding: 16px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex; /* Enable flexbox */
+    flex-direction: column; /* Stack content vertically */
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    text-align: center; /* Align text inside the card */
+    width: 250px; /* Set a fixed width */
+    height: 150px; /* Set a fixed height */
+    flex-shrink: 0; /* Prevent shrinking */
+    overflow: hidden; /* Prevent content from overflowing */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+    transition: transform 0.2s ease-in-out;
+}
+
+.recipe-card:hover {
+    background-color: #d1d1d1; /* Darker red on hover */
+    transform: scale(1.05);
+}
+
+.recipe-card h3, .recipe-card p {
+    overflow: hidden; /* Hide overflowed content */
+    white-space: nowrap; /* Prevent text from wrapping to the next line */
+    text-overflow: ellipsis; /* Add ellipses to indicate truncation */
+    width: 100%; /* Ensure ellipsis applies to the full width of the box */
+    max-width: 100%; /* Prevent overflow */
+    margin: 8px 0 4px 0;
+}
+
+.recipe-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow cards to wrap if they exceed available space */
+    gap: 16px; /* Add spacing between the recipe cards */
+    justify-content: center; /* Center the items horizontally */
+    align-items: center; /* Center the items vertically */
+    overflow:auto;
+    max-height: 65vh;
+    padding: 10px;
+    width:100%;
+}
+
+.my-recipes-page {
+    padding: 20px;
+}
+
+.recipe-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.recipe-container::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    /* border-radius: 4px; */
+}

@@ -10,6 +10,7 @@ const NavBar = ({ handleLogout, isLoggingOut }) => {
         <nav className="navbar">
             <h2 className="navbar-title">Dish Diaries</h2>
             <div className="navbar-links">
+                <Link to="/recipes">Add Recipes</Link>
                 <Link to="/my-recipes">My Recipes</Link>
                 <Link to="/group-recipes">Group Recipes</Link>
                 <Link to="/account">Account Information</Link>
