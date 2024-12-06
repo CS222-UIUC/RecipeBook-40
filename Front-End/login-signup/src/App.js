@@ -7,6 +7,7 @@ import MyRecipes from './Components/MyRecipes/MyRecipes';
 import SharedRecipes from './Components/SharedRecipes/SharedRecipes';
 import RecipeDetails from './Components/RecipeDetails/RecipeDetails';
 import AccountInformation from './Components/AccountInformation/AccountInformation';
+import PasswordReset from './Components/PasswordReset/PasswordReset';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/recipes" element={<RecipeBoard />} />
         <Route path="/recipes/:id" element={<RecipeDetails />} />
         <Route path="/account" element={<AccountInformation />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
       </Routes>
     </Router>
     </div>
