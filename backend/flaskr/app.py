@@ -89,7 +89,6 @@ app.config['MAIL_PORT'] = 587  # Gmail uses port 587 for TLS
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = 'dish.diaries222@gmail.com'
-app.config['MAIL_PASSWORD'] = 'dishdiaries123'  # Ensure this is secure
 app.config['MAIL_DEFAULT_SENDER'] = 'dish.diaries222@gmail.com'
 
 mail = Mail(app)
