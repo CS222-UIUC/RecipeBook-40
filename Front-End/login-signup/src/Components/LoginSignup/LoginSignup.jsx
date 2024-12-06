@@ -9,6 +9,40 @@ import email_icon from "../Assets/email.png";
 
 axios.defaults.baseURL = "http://127.0.0.1:5000";
 
+const LostCredentialsModal = ({ action, onClose }) => {
+    const [email, setEmail] = useState("");
+    const [message, setMessage] = useState("");
+
+    const handleSubmit = async () => {
+        try {
+            const endpoint = action === "Lost Username" ? "/lost-username" : "/reset-password-request";
+            const res = await axios.post(endpoint, { email });
+            setMessage(res.data.message);
+        } catch (error) {
+            setMessage(error.response?.data?.message || "An error occurred");
+        }
+    };
+
+    return (
+        <div className="modal">
+            <div className="modal-content">
+                <h2>{action}</h2>
+                <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                <button onClick={handleSubmit}>Submit</button>
+                <button className="close-btn" onClick={onClose}>
+                    Close
+                </button>
+                {message && <div className="message-2">{message}</div>}
+            </div>
+        </div>
+    );
+};
+
 const LoginSignup = () => {
     const [action, setAction] = useState("Login");
     const [username, setUsername] = useState("");
@@ -16,7 +50,14 @@ const LoginSignup = () => {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [showLostModal, setShowLostModal] = useState(false);
+    const [lostAction, setLostAction] = useState("Lost Username");
     const navigate = useNavigate();
+
+    const handleLostClick = (action) => {
+        setLostAction(action);
+        setShowLostModal(true);
+    };
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -127,10 +168,28 @@ const LoginSignup = () => {
                         </div>
                     </div>
                     {action === "Sign Up" ? null : (
+                            // <div className="forgot-password">
+                            //     Lost Username or Password? <span>Click Here!</span>
+                            // </div>
                             <div className="forgot-password">
-                                Lost Username or Password? <span>Click Here!</span>
+                                Lost Username or Password?{" "}
+                                <span onClick={() => handleLostClick("Lost Username")}>
+                                    Username
+                                </span>{" "}
+                                |{" "}
+                                <span onClick={() => handleLostClick("Reset Password")}>
+                                    Password
+                                </span>
                             </div>
                         )}
+                        {showLostModal && console.log("Modal is being rendered")}
+                            {showLostModal && (
+                                <LostCredentialsModal
+                                    action={lostAction}
+                                    onClose={() => setShowLostModal(false)}
+                                />
+                            )}
+
                     <div className="submit-container">
                         <div
                             className={action === "Login" ? "submit gray" : "submit"}

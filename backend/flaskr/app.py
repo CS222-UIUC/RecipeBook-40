@@ -6,7 +6,71 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import bcrypt
 from flask_jwt_extended import JWTManager, jwt_required, verify_jwt_in_request, get_jwt_identity, create_access_token
+from flask_mail import Mail, Message
+import base64
+import os
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from email.mime.text import MIMEText
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import pickle
 
+# Scopes required for sending email
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+
+import os
+
+def authenticate_gmail():
+    creds = None
+    # Dynamically determine the absolute path
+    credentials_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credentials.json')
+    
+    # Check if credentials.json exists
+    if not os.path.exists(credentials_path):
+        raise FileNotFoundError(f"Could not find {credentials_path}. Make sure the file is in the correct location.")
+    
+    # Authenticate and generate the token
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+    creds = flow.run_local_server(port=0)
+    # Save the token for future use
+    with open('token.pickle', 'wb') as token:
+        pickle.dump(creds, token)
+    print("Authentication complete. Token saved to token.pickle.")
+
+
+def get_authenticated_service():
+    creds = None
+    # Load the saved token
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)  # Load using pickle
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            raise Exception("Please run the authentication script to generate token.pickle")
+    service = build('gmail', 'v1', credentials=creds)
+    return service
+
+
+def send_email(service, sender_email, recipient_email, subject, body):
+    # Create MIMEText email
+    message = MIMEText(body)
+    message['to'] = recipient_email
+    message['from'] = sender_email
+    message['subject'] = subject
+
+    # Encode message to base64
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+    # Send the email
+    message = {'raw': raw_message}
+    try:
+        service.users().messages().send(userId='me', body=message).execute()
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 # App Configuration
@@ -19,6 +83,16 @@ app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_IDENTITY_CLAIM'] = 'user_id'
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Gmail SMTP server
+app.config['MAIL_PORT'] = 587  # Gmail uses port 587 for TLS
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'dish.diaries222@gmail.com'
+app.config['MAIL_PASSWORD'] = 'dishdiaries123'  # Ensure this is secure
+app.config['MAIL_DEFAULT_SENDER'] = 'dish.diaries222@gmail.com'
+
+mail = Mail(app)
 
 db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
@@ -98,6 +172,9 @@ def signup():
         return jsonify(message="Username already exists."), 400
     if User.query.filter_by(email=data['email']).first():
         return jsonify(message="Email already exists."), 400
+
+    if not data['username'] or not data['email']:
+        return jsonify(message="Invalid Username or Password"), 400
 
     # Generate salt and hash the password
     salt = bcrypt.gensalt().decode('utf-8')
@@ -377,6 +454,82 @@ def update_password():
     db.session.commit()
     return jsonify({"message": "Password updated successfully"}), 200
 
+@app.route('/lost-username', methods=['POST'])
+def lost_username():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()  # Assuming you have a User model
+    if user:
+        service = get_authenticated_service()  # Initialize Gmail API service
+        send_email(
+            service=service,
+            sender_email='dish.diaries222@gmail.com',
+            recipient_email=email,
+            subject="Your Username",
+            body=f"Your username is: {user.username}"
+        )
+        return jsonify({"message": "Username sent to your email."}), 200
+    return jsonify({"message": "Email not found."}), 404
+
+
+@app.route('/reset-password-request', methods=['POST'])
+def reset_password_request():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+    if user:
+        service = get_authenticated_service()  # Initialize Gmail API service
+        token = generate_jwt(user.id)  # Use the `generate_jwt` function to create a reset token
+        reset_link = f"http://127.0.0.1:3000/reset-password?token={token}"  # Update link if hosted elsewhere
+        print(token)
+
+        # Send reset link via email
+        send_email(
+            service=service,
+            sender_email='dish.diaries222@gmail.com',
+            recipient_email=email,
+            subject="Password Reset Request",
+            body=f"Click the link to reset your password: {reset_link}"
+        )
+        return jsonify({"message": "Password reset link sent to your email."}), 200
+
+    return jsonify({"message": "Email not found."}), 404
+
+
+def verify_token(token):
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        return payload.get('user_id')  # Extract user ID
+    except jwt.ExpiredSignatureError:
+        return None  # Token expired
+    except jwt.InvalidTokenError:
+        return None  # Token invalid
+
+
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+    token = request.json.get('token')  # Token from the reset link
+    print(token)
+    new_password = request.json.get('new_password')  # New password from the user
+
+    if not token or not new_password:
+        return jsonify({"message": "Token and new password are required"}), 400
+
+    user_id = verify_jwt(token)  # Verify the token
+    if not user_id:
+        return jsonify({"message": "Invalid or expired token"}), 400
+
+    # Fetch the user and update the password
+    user = User.query.get(user_id)
+    if user:
+        salt = bcrypt.gensalt().decode('utf-8')
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
+
+        user.password = hashed_password  # Save the hashed password
+        user.salt = salt
+        db.session.commit()
+
+        return jsonify({"message": "Password reset successful"}), 200
+
+    return jsonify({"message": "User not found"}), 404
 
 
 

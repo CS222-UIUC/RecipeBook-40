@@ -81,12 +81,11 @@ const AccountInformation = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             console.log("Response from server:", response.data);
-            alert("Username updated successfully!");
             setUser((prev) => ({ ...prev, username: newUsername }));
             setIsEditingUsername(false);
         } catch (error) {
             console.error("Error updating username:", error.response?.data || error.message);
-            alert("Failed to update username.");
+            alert("Username already exists");
         }
     };
     
