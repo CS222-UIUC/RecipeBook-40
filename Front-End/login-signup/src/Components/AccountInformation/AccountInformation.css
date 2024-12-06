@@ -1,11 +1,14 @@
 .account-information {
-    max-width: 600px;
+    width: 50vw;
     margin: 20px auto;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
     font-family: 'Montserrat', sans-serif;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .account-information h1 {
@@ -25,6 +28,7 @@
     cursor: pointer;
     border: none;
     border-radius: 4px;
-    background-color: #007bff;
+    background: #d51b37;
+    border-radius: 20px;
     color: white;
 }

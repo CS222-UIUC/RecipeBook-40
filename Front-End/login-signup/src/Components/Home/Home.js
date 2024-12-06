@@ -13,7 +13,7 @@ const Home = () => {
     <div className="home">
       <h1>Welcome to Recipe Book</h1>
       <p>Discover and share amazing recipes from all around the world.</p>
-      <button className="login-button" onClick={goToLogin}>Login</button>
+      <button className="login-button" onClick={goToLogin}>Get Started Now!</button>
     </div>
   );
 };

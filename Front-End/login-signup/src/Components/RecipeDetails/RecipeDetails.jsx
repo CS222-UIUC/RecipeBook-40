@@ -31,6 +31,11 @@ const RecipeDetails = () => {
 
     useEffect(() => {
         const fetchRecipe = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/login");
+                return;
+            }
             try {
                 const token = localStorage.getItem("token");
                 const response = await axios.get(`/recipes/${id}`, {

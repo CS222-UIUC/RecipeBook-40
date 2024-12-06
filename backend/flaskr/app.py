@@ -5,7 +5,7 @@ from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import bcrypt
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import JWTManager, jwt_required, verify_jwt_in_request, get_jwt_identity, create_access_token
 
 
 
@@ -14,6 +14,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../database.sql'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_IDENTITY_CLAIM'] = 'user_id'
 
 db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
@@ -22,6 +27,7 @@ CORS(app, supports_credentials=True)
 # JWT Configuration
 JWT_SECRET_KEY = 'your_jwt_secret_key'
 JWT_EXPIRATION_DELTA = timedelta(hours=1)
+j = JWTManager(app)
 
 # In-memory blacklist for tokens
 blacklisted_tokens = set()
@@ -33,6 +39,8 @@ class User(db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     salt = db.Column(db.String(10), nullable=False)
+    total_recipes = db.Column(db.Integer, default=0)
+    member_since = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -48,9 +56,10 @@ class Recipe(db.Model):
 def generate_jwt(user_id):
     payload = {
         'user_id': user_id,
+        'sub': user_id,  # Add the required 'sub' claim for the subject
         'exp': datetime.utcnow() + JWT_EXPIRATION_DELTA
     }
-    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
+    token = create_access_token(identity=user_id)
     return token
 
 def verify_jwt(token):
@@ -244,6 +253,7 @@ def add_recipe():
         users=data['users'],
         owner=user.username
     )
+    user.total_recipes += 1
     db.session.add(new_recipe)
     db.session.commit()
 
@@ -285,30 +295,42 @@ def get_user_data(user):
     return {
         "username": user.username,
         "email": user.email,
-        "joinedAt": user.joined_at,
-        "totalRecipes": user.total_recipes
+        "memberSince": user.member_since.strftime("%Y-%m-%d %H:%M:%S")
     }
 
 # Endpoints
 @app.route('/account', methods=['GET'])
 @jwt_required
 def get_account_info():
-    current_user_id = get_jwt_identity()
+    # Explicitly verify the JWT in the request
+    try:
+        verify_jwt_in_request()
+        current_user_id = get_jwt_identity()
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 401
+
     user = User.query.get(current_user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-
-    stats = {"totalRecipes": user.total_recipes}
+    total_recipes = Recipe.query.filter_by(owner=user.username).count()
+    stats = {"totalRecipes": total_recipes}
     return jsonify({"user": get_user_data(user), "stats": stats}), 200
 
 @app.route('/account/username', methods=['PUT'])
-@jwt_required
 def update_username():
-    current_user_id = get_jwt_identity()
+    try:
+        # Verify JWT in the request
+        verify_jwt_in_request()
+        current_user_id = get_jwt_identity()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
+
+    # Fetch the user from the database
     user = User.query.get(current_user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Get the new username from the request body
     data = request.json
     new_username = data.get("username")
     if not new_username:
@@ -318,26 +340,44 @@ def update_username():
     if User.query.filter_by(username=new_username).first():
         return jsonify({"error": "Username already taken"}), 400
 
+    # Update the username
     user.username = new_username
     db.session.commit()
     return jsonify({"message": "Username updated successfully"}), 200
 
+
+
 @app.route('/account/password', methods=['PUT'])
-@jwt_required
 def update_password():
-    current_user_id = get_jwt_identity()
+    try:
+        # Verify JWT in the request
+        verify_jwt_in_request()
+        current_user_id = get_jwt_identity()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
+
+    # Fetch the user from the database
     user = User.query.get(current_user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Get the new password from the request body
     data = request.json
     new_password = data.get("password")
     if not new_password:
         return jsonify({"error": "Password is required"}), 400
 
-    user.password = generate_password_hash(new_password)
+    # Hash the new password with bcrypt
+    salt = bcrypt.gensalt().decode('utf-8')
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
+
+    # Update the password and salt
+    user.password = hashed_password
+    user.salt = salt
     db.session.commit()
     return jsonify({"message": "Password updated successfully"}), 200
+
+
 
 
 if __name__ == '__main__':

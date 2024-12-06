@@ -95,7 +95,7 @@ const SharedRecipes = () => {
                         </div>
                     ))
                 ) : (
-                    <p>No recipes found. Add some recipes!</p>
+                    <p>No recipes found. Share some recipes!</p>
                 )}
             </div>
         </div>
