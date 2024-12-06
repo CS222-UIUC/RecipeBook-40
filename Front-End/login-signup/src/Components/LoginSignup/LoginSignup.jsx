@@ -126,7 +126,11 @@ const LoginSignup = () => {
                             Submit
                         </div>
                     </div>
-                    
+                    {action === "Sign Up" ? null : (
+                            <div className="forgot-password">
+                                Lost Username or Password? <span>Click Here!</span>
+                            </div>
+                        )}
                     <div className="submit-container">
                         <div
                             className={action === "Login" ? "submit gray" : "submit"}
