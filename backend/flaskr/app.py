@@ -5,6 +5,7 @@ from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import bcrypt
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
 
 
@@ -260,6 +261,10 @@ def shared_recipes():
         Recipe.is_personal == False
     ).all()
 
+    shared_recipes = [
+        recipe for recipe in shared_recipes if (user.username in recipe.users or recipe.owner == user.username)
+    ]
+
     recipe_list = [
         {
             "id": recipe.id,
@@ -275,6 +280,64 @@ def shared_recipes():
     ]
 
     return jsonify({"recipes": recipe_list}), 200
+
+def get_user_data(user):
+    return {
+        "username": user.username,
+        "email": user.email,
+        "joinedAt": user.joined_at,
+        "totalRecipes": user.total_recipes
+    }
+
+# Endpoints
+@app.route('/account', methods=['GET'])
+@jwt_required
+def get_account_info():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    stats = {"totalRecipes": user.total_recipes}
+    return jsonify({"user": get_user_data(user), "stats": stats}), 200
+
+@app.route('/account/username', methods=['PUT'])
+@jwt_required
+def update_username():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.json
+    new_username = data.get("username")
+    if not new_username:
+        return jsonify({"error": "Username is required"}), 400
+
+    # Check if the username is already taken
+    if User.query.filter_by(username=new_username).first():
+        return jsonify({"error": "Username already taken"}), 400
+
+    user.username = new_username
+    db.session.commit()
+    return jsonify({"message": "Username updated successfully"}), 200
+
+@app.route('/account/password', methods=['PUT'])
+@jwt_required
+def update_password():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.json
+    new_password = data.get("password")
+    if not new_password:
+        return jsonify({"error": "Password is required"}), 400
+
+    user.password = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200
 
 
 if __name__ == '__main__':

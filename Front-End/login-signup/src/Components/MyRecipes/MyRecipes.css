@@ -28,6 +28,7 @@
     text-overflow: ellipsis; /* Add ellipses to indicate truncation */
     width: 100%; /* Ensure ellipsis applies to the full width of the box */
     max-width: 100%; /* Prevent overflow */
+    margin: 8px 0 4px 0;
 }
 
 .recipe-container {
@@ -36,6 +37,10 @@
     gap: 16px; /* Add spacing between the recipe cards */
     justify-content: center; /* Center the items horizontally */
     align-items: center; /* Center the items vertically */
+    overflow:auto;
+    max-height: 65vh;
+    padding: 10px;
+    width:100%;
 }
 
 .my-recipes-page {

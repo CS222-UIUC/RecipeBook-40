@@ -1,0 +1,30 @@
+.account-information {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.account-information h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.account-information p {
+    margin: 10px 0;
+    font-size: 1rem;
+}
+
+.account-information button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+}

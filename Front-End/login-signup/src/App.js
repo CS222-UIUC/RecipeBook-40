@@ -7,6 +7,7 @@ import CreateAccount from './Components/CreateAccount/CreateAccount';
 import MyRecipes from './Components/MyRecipes/MyRecipes';
 import SharedRecipes from './Components/SharedRecipes/SharedRecipes';
 import RecipeDetails from './Components/RecipeDetails/RecipeDetails';
+import AccountInformation from './Components/AccountInformation/AccountInformation';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/recipes" element={<RecipeBoard />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/recipes/:id" element={<RecipeDetails />} />
+        <Route path="/account" element={<AccountInformation />} />
       </Routes>
     </Router>
     </div>
