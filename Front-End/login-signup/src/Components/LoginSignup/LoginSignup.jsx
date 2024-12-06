@@ -126,18 +126,19 @@ const LoginSignup = () => {
                             Submit
                         </div>
                     </div>
+                    
                     <div className="submit-container">
                         <div
                             className={action === "Login" ? "submit gray" : "submit"}
                             onClick={() => setAction("Sign Up")}
                         >
-                            Sign Up
+                            Sign Up Page
                         </div>
                         <div
                             className={action === "Sign Up" ? "submit gray" : "submit"}
                             onClick={() => setAction("Login")}
                         >
-                            Log In
+                            Log In Page
                         </div>
                     </div>
                     {message && <div className="message">{message}</div>}
