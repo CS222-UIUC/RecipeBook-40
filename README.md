@@ -31,19 +31,17 @@ The application is built using the following components:
   - Contributors: Zyun Lam.
  
 ### Installation Instructions
+
+#### Backend
 ```bash
-$ docker-compose -f ./compose.yml up --build
+pip install Flask Flask-SQLAlchemy Flask-CORS Flask-JWT-Extended Flask-Mail bcrypt jwt google-auth google-auth-oauthlib google-api-python-client requests
 ```
 
-This will start up three components, the frontend react server, backend flask server, and reverse proxy. If you want more granular control over the build and startup process, you can instead run these two commands sequentially (but with the same result)
-
+#### Frontend
 ```bash
-$ docker-compose -f ./compose.yml build
-$ docker-compose -f ./compose.yml up
+npm install
+npm install react react-dom react-router-dom axios
 ```
-
-Running these commands will build the docker image by installing the base images, all dependencies, and then running whatever entrypoint the system has.
-
 
 ### Group Members and their Roles
 - Sneha Singh: Frontend (Advanced), Backend, Database.
