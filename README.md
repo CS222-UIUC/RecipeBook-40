@@ -42,6 +42,19 @@ pip install Flask Flask-SQLAlchemy Flask-CORS Flask-JWT-Extended Flask-Mail bcry
 npm install
 npm install react react-dom react-router-dom axios
 ```
+### How To Run
+
+#### Backend
+First navigate to backend/flaskr
+```bash
+python3 app.py
+```
+
+#### Frontend
+First navigate to Front-End/login-signup
+```bash
+npm start
+```
 
 ### Group Members and their Roles
 - Sneha Singh: Frontend (Advanced), Backend, Database.
