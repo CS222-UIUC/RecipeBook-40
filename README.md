@@ -1,11 +1,36 @@
 # RecipeBook-40
 
-### Running the application
-As of now, RecipeBook only has the development env (we are in development, after all)
+### Introduction
+Dish Diaries is a recipe storing and sharing app designed for collaborative cooking and recipe sharing among couples and small groups. Users can create accounts, store personal recipes, and share them with friends, family, or the broader community.
 
-All server and frontend/backend setup is done through Docker. If you have docker-desktop, you don't need to install anything new (maybe just run docker desktop to start the docker engine). If you don't have docker desktop but have docker, start the docker daemon to be able to run the system.
+Motivation: Inspired by Sneha's love for cooking with her boyfriend, Dish Diaries offers a centralized and seamless platform for recipe sharing, unlike other apps that lack a collaborative focus.
 
-#### One-command setup
+### Technical Architecture
+The application is built using the following components:
+
+- Frontend:
+  - Role: Provides a user-friendly interface for recipe creation, organization, and sharing.
+  - Technologies: React.js, Axios.
+  - Key Features: Login, password reset, account creation, recipe browsing.
+  - Contributors: Sneha Singh (Advanced), Shreyes Bharat (Basic).
+- Backend:
+  - Role: Manages user authentication, recipe data storage, and core application logic.
+  - Technologies: Python Flask, Flask-SQLAlchemy, Flask-JWT-Extended.
+  - Contributors: Sneha Singh.
+- Database:
+  - Role: Stores user accounts and recipe data.
+  - Technologies: PostgreSQL, SQLAlchemy ORM.
+  - Contributors: Sneha Singh.
+- Backend Infrastructure (Intended):
+  - Role: Connects components via a reverse proxy for seamless data handling.
+  - Technologies: Nginx, Docker/Docker-compose.
+  - Contributors: Michael Karpov, Shreyes Bharat.
+- Unit Testing (Intended):
+  - Role: Validates API endpoints and ensures system stability during development.
+  - Technologies: Python Requests library.
+  - Contributors: Zyun Lam.
+ 
+### Installation Instructions
 ```bash
 $ docker-compose -f ./compose.yml up --build
 ```
@@ -19,6 +44,9 @@ $ docker-compose -f ./compose.yml up
 
 Running these commands will build the docker image by installing the base images, all dependencies, and then running whatever entrypoint the system has.
 
-### Reverse proxy
-The proxy setup points all traffic to `localhost/`, redirecting traffic from `localhost:80/` to `localhost:3000/` and `localhost:80/api/*` to `localhost:443/*`. This has the effect of seamlessly allowing to make calls to `localhost/api` instead of to a separate server.
 
+### Group Members and their Roles
+- Sneha Singh: Frontend (Advanced), Backend, Database.
+- Michael Karpov: Backend Infrastructure (Intended).
+- Shreyes Bharat: Frontend (Basic), Backend Infrastructure (Intended).
+- Zyun Lam: Unit Testing (Intended).
