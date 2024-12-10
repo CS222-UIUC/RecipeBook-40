@@ -42,7 +42,7 @@ pip install Flask Flask-SQLAlchemy Flask-CORS Flask-JWT-Extended Flask-Mail bcry
 npm install
 npm install react react-dom react-router-dom axios
 ```
-### How To Run
+### Running the Code
 
 #### Backend
 First navigate to backend/flaskr
