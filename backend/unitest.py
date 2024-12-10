@@ -15,6 +15,19 @@ def test_read_recipe():
     data = json.loads(req.content)
     assert(data == test_recipe)
 
+def test_add_recipe():
+    # Now send the data?
+    data = {
+        "name": "Test recipe",
+        "description": "test description",
+        "steps": {"1": "test", "2": "test 2"},
+        "ingredients": {"Eggs": "2", "Flour": "5 cups", "Water": "3 cups"},
+        "is_personal": True,
+        "users": [],
+        "owner": "Test owner"
+    }
+    requests.post("http://localhost/add-recipe", data=data)
+
 if __name__ == "__main__":
     test_generate_recipe()
     test_read_recipe()
