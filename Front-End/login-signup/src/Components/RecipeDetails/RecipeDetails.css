@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Great+Vibes&family=Lavishly+Yours&family=Poiret+One&family=Rock+Salt&display=swap');
+
+/* RecipeBoard.css */
+
+html, body {
+    height: 100%; /* Ensures the body takes the full height of the viewport */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    font-family: 'Montserrat', sans-serif;
+    overflow: hidden;
+}
+
+/* Header styles */
+    .recipe-details h1 {
+        text-align: center;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 5px; /* Further reduce margin to bring description closer */
+        word-wrap: break-word; /* Ensure long words break properly */
+        overflow-wrap: break-word;
+    }
+
+    /* Description styles */
+    .recipe-details p {
+        font-size: 1rem;
+        color: #555;
+        line-height: 1.4; /* Adjust line height for a more compact look */
+        margin-top: 0; /* Ensure there is no margin above the description */
+        margin-bottom: 5px; /* Reduce the margin between description and next content */
+        text-align: center;
+        word-wrap: break-word; /* Ensure long descriptions break properly */
+        overflow-wrap: break-word; /* Break long words if necessary */
+        white-space: normal; /* Ensure text wraps properly */
+        width: 100%; /* Set to container width to ensure wrapping */
+    }
+
+    /* General container for recipe details */
+    .recipe-details {
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Center all children horizontally */
+        width: 60vw; /* Set width of the entire content */
+        padding: 20px;
+        /* box-sizing: border-box; */
+        background-color: #fff;
+        overflow-y: hidden; /* Prevent any overflow from recipe-details */
+        max-height: 80vh;
+    }
+
+
+    /* Container for ingredients and steps */
+    .ingredients-steps-container {
+        display: flex;
+        flex-direction: column; /* Stack ingredients and steps vertically */
+        justify-content: flex-start; /* Align items to the top */
+        align-items: center; /* Center items horizontally */
+        gap: 20px; /* Add space between ingredients and steps */
+        width: 80%; /* Limit the width to make it centered and readable */
+        max-width: 1200px; /* Prevent it from growing too wide */
+        box-sizing: border-box;
+        margin: 10px 0; /* Add space above and below ingredients and steps */
+    }
+    
+
+    /* Individual sections for ingredients and steps */
+    .ingredients, .steps {
+        width: 80%; /* Ensure equal width for both columns */
+        padding: 20px; /* Increase padding inside each section */
+        border: 1px solid #ddd;
+        text-align: center;
+        /* border-radius: 16px; */
+        color: inherit;
+        background-color: rgba(213, 26, 54);
+        box-sizing: border-box;
+        overflow-y: auto; /* Enable vertical scrolling */
+        max-height: 20vh; /* Limit the height to half the viewport */
+        word-wrap: break-word; /* Ensure long words wrap properly within the box */
+        overflow-wrap: anywhere; /* Break long strings anywhere if necessary */
+        margin: 10px 0; /* Add more space above and below each section */
+    }
+    
+
+    .ingredients .no-items, .steps .no-items {
+        font-size: 1rem;
+        color: #fff !important; /* Ensure the text is white */
+        margin-top: 10px;
+    }
+
+    /* Heading styles for each section */
+    .ingredients h3, .steps h3 {
+        font-size: 1.2rem;
+        color: #fff;
+        margin-bottom: 10px;
+        position: sticky; 
+        text-align: center; /* Center section headers */
+    }
+
+    /* Unordered list styles for ingredients */
+    .ingredients ul {
+        list-style-type: disc; /* Bullet points for unordered list */
+        padding-left: 20px; /* Indent for better readability */
+        word-wrap: break-word; /* Ensure text within bullet points wraps properly */
+        text-align: left; /* Align list items to the left for better readability */
+    }
+
+    /* Ordered list styles for steps */
+    .steps ol {
+        list-style-type: decimal; /* Numbers for ordered list */
+        padding-left: 20px; /* Indent for better readability */
+        word-wrap: break-word; /* Ensure text within ordered list wraps properly */
+        text-align: left; /* Align list items to the left for better readability */
+    }
+
+    /* List item styles for both ingredients and steps */
+    .ingredients ul li, .steps ol li {
+        padding: 10px;
+        margin-bottom: 8px;
+        /* border: 1px solid #ddd; */
+        border-radius: 4px;
+        /* background-color: #fff; */
+        font-size: 1rem;
+        color: #fff;
+        word-wrap: break-word; /* Ensure long text wraps properly within the list items */
+        overflow-wrap: anywhere; /* Break text at any point if necessary */
+        white-space: normal; /* Make sure text wraps properly instead of staying on one line */
+    }
+
+    /* Remove hover effects */
+    .ingredients:hover, .steps:hover {
+        cursor: default; /* Keep cursor as default arrow */
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .ingredients-steps-container {
+            flex-direction: column; /* Stack the columns vertically on smaller screens */
+            align-items: center; /* Center items when stacked */
+        }
+
+        .ingredients, .steps {
+            width: 100%; /* Full width for smaller screens */
+        }
+    }
